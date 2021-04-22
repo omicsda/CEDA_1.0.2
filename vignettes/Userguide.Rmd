@@ -1,0 +1,123 @@
+---
+title: "CRISPR Screen and Gene Expression Differential Analysis"
+author: "Lianbo Yu, Yue Zhao, and Lang Li"
+date: "`r Sys.Date()`"
+#output: rmarkdown::html_vignette
+output: 
+  pdf_document:
+    toc: yes
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{CRISPR Screen and Gene Expression Differential Analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Introduction
+CEDA is developed for analyzing read counts of single guide RNAs (sgRNAs)
+by CRISPR screen experiments. sgRNAs are synthetically generated from genes 
+and each gene can generate multiple sgRNAs. CEDA models sgRNA counts at 
+different levels of gene expression by multi-component normal mixtures 
+and EM algorithms. Posterior estimates at sgRNA level are then summarized 
+for each gene.
+
+In this document, we use a MDA231 cell experiment as an example to
+demonstrate how to use CEDA to perform CRISPR screen data analysis.
+
+## Data and Normalization
+Three samples of MDA231 cells were untreated at T0, and another three 
+samples of MDA231 cells were treated with DMSO at T0. We are interested 
+in detecting sgRNAs that are differentially changed by treatment. 
+
+sgRNA read counts along with a list of non-essential genes are stored 
+in the dataset mda231 in CEDA. 
+```{r data}
+library(CEDA)
+data("mda231")
+dim(mda231$sgRNA)
+length(mda231$neGene$Gene)
+head(mda231$sgRNA)
+```
+
+sgRNA read counts needs to be normalized across sample replicates before 
+formal analysis. Non-essential genes are assumed to have no change after 
+DMSO treatment. Median normalization factors of the non-essential genes 
+were used for normalizing sgRNA counts of all samples.
+```{r normalization}
+mda231.ne <- mda231$sgRNA[mda231$sgRNA$Gene %in% mda231$neGene$Gene,]
+cols <- c(3:8)
+mda231.norm <- medianNormalization(mda231$sgRNA[,cols], mda231.ne[,cols])[[2]]
+```
+
+## Analysis
+Our goal is to detect essential sgRNAs that have different count levels 
+between conditions. R package limma was used to calculate log fold ratios
+between three untreated and three treated samples. 
+
+### Calculating fold ratios
+```{r limma}
+library(limma)
+group <- gl(2,3,labels=c("Control","Baseline"))
+design <- model.matrix(~  0 + group)
+colnames(design) <- sapply(colnames(design),function(x) substr(x,6,nchar(x)))
+contrast.matrix <- makeContrasts("Control-Baseline",levels=design)
+limma.fit <- limma(log2(mda231.norm+1),design,contrast.matrix)
+```
+
+Then results from limma analysis were merged with sgRNA counts.
+```{r merge}
+mda231.limma <- data.frame(mda231$sgRNA,limma.fit)
+head(mda231.limma)
+```
+
+### Fold ratios under the null hypotheses
+Under the null hypothses, all sgRNAs levels are unchanged between the
+two conditions. To obtain fold ratios under the null, samples were 
+permutated between two conditions, log fold ratios were obtained from
+limma analysis under each permutation.
+```{r betanull}
+betanull <- limmaPermutation(log2(mda231.norm+1),design,contrast.matrix,20)
+theta0 <- sd(betanull)
+theta0
+```
+
+### Fitting three-component mixture models
+A three-component mixture model is assumed for log fold ratios at 
+different level of gene expression. Empirical Bayes method was employed 
+to estimate parematers of the mixtures and posterior means were obtained 
+for estimating actual log fold ratios between the two conditions. 
+P-values of sgRNAs were then calculated by permutation method.
+
+```{r mm, results='hide'}
+nmm.fit <- normalMM(mda231.limma,theta0)
+```
+
+Results from the mixture model were shown in Figure $1$. False 
+discovery rate of $0.05$ was used for declaring significant changes in red
+color between the two conditions for sgRNAs.
+
+```{r fig1, fig.cap = "Log fold ratios of sgRNAs vs. gene expression level"}
+scatterPlot(nmm.fit$data,fdr=0.05,xlim(-0.5,12),ylim(-8,5))
+```
+
+### Gene level summarization
+From the p-values of sgRNAs, gene level p-values were obtained by 
+using modified robust rank aggregation method (alpha-RRA). Log 
+fold ratios were also summarized at gene level.
+```{r pval}
+mda231.nmm <- nmm.fit[[1]]
+p.gene <- calculateGenePval(exp(mda231.nmm$log_p), mda231.nmm$Gene, 0.05)
+fdr.gene <- stats::p.adjust(p.gene$pvalue, method = "fdr")
+lfc.gene <- calculateGeneLFC(mda231.nmm$lfc, mda231.nmm$Gene)
+```
+
