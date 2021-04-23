@@ -1,1 +1,9 @@
+importFrom("stats", "median", "dnorm", "pnorm")
+importFrom("limma", "contrasts.fit", "makeContrasts")
+importFrom("mixtools", "normalmixEM")
+importFrom("ggplot2", "aes_string", "aes",
+           "geom_point", "geom_vline",
+           "theme", "theme_bw",
+           "element_blank", "xlab", "ylab")
+
 exportPattern("^[[:alpha:]]+")

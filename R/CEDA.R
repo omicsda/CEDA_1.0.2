@@ -46,7 +46,7 @@ medianNormalization <- function(data, control) {
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
 #' limma.fit <- limma(y,design,contrast.matrix)
-limma <- function(data,design,contrast.matrix) {
+limma <- function(data, design, contrast.matrix) {
   lmfit <- limma::lmFit(data,design)
   lmfit.eBayes <- limma::eBayes(contrasts.fit(lmfit, contrast.matrix))
   results <- data.frame(lmfit.eBayes$coef,
@@ -77,7 +77,7 @@ limma <- function(data,design,contrast.matrix) {
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
 #' fit <- limmaPermutation(y,design,contrast.matrix,20)
-limmaPermutation <- function(data,design,contrast.matrix,nperm) {
+limmaPermutation <- function(data, design, contrast.matrix, nperm) {
   n.rna <- dim(data)[1]
   beta.null <- matrix(0,n.rna,nperm)
   ns.grp <- dim(design)[1]/2
@@ -109,7 +109,7 @@ limmaPermutation <- function(data,design,contrast.matrix,nperm) {
 #' @param d0 Number of times for fitting mixture model using different 
 #'   starting values
 #' @return Normal mixture model fit and BIC value of the log-likelihood
-EMFit <- function(x,k0,mean_constr,sd_constr,npara,d0) {
+EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
   for (i in 1:d0)
   {
     EM.fit.temp <- mixtools::normalmixEM(x,k=k0,mean.constr=mean_constr,sd.constr=sd_constr)
@@ -446,14 +446,16 @@ normalMM <- function(data,theta0) {
 #'
 #' @param data A numeric matrix from the output of normalMM function
 #' @param fdr A level of false discovery rate
-scatterPlot <- function(data,fdr,...) {
+#' @param ... Other graphical parameters
+scatterPlot <- function(data, fdr, ...) {
   b <- 6
   xs <- min(data$exp.level.log2)
   xe <- max(data$exp.level.log2)+0.1
   bl <- (xe-xs)/b
   binter <- c(xs,xs+bl,xs+2*bl,xs+3*bl,xs+4*bl,xe)
   data.fdr <- data[data$null.posterior<=fdr,]
-  ggplot2::ggplot(data, aes(x=exp.level.log2,y=lfc)) +
+  exp.level.log2 <- lfc <- NULL
+  ggplot2::ggplot(data, aes(x = exp.level.log2, y = lfc)) +
     geom_point(size=1,alpha=0.2) +
     xlab("log2(gene expression)") + ylab("log2(FC)") +
     geom_point(data=data.fdr,aes(x=exp.level.log2,y=lfc),size=1,alpha=0.2,color="red3") +

@@ -10,6 +10,8 @@ scatterPlot(data, fdr, ...)
 \item{data}{A numeric matrix from the output of normalMM function}
 
 \item{fdr}{A level of false discovery rate}
+
+\item{...}{Other graphical parameters}
 }
 \description{
 This function generates a scatter plot of log2 fold ratios of sgRNAs

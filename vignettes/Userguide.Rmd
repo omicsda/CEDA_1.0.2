@@ -10,6 +10,8 @@ output:
 vignette: >
   %\VignetteIndexEntry{CRISPR Screen and Gene Expression Differential Analysis}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{CEDA}
+  %\VignettePackage{CEDA}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
