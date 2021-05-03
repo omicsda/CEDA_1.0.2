@@ -1,9 +1,14 @@
-importFrom("stats", "median", "dnorm", "pnorm")
-importFrom("limma", "contrasts.fit", "makeContrasts")
-importFrom("mixtools", "normalmixEM")
-importFrom("ggplot2", "aes_string", "aes",
-           "geom_point", "geom_vline",
-           "theme", "theme_bw",
-           "element_blank", "xlab", "ylab")
+importFrom(ggplot2, aes, aes_string, element_blank,
+           geom_point, geom_vline,
+           theme, theme_bw, xlab, ylab)
+importFrom(limma, contrasts.fit, eBayes, lmFit, makeContrasts)
+importFrom(mixtools,normalmixEM)
+importFrom(stats, dnorm, pnorm, median)
 
-exportPattern("^[[:alpha:]]+")
+export(calculateGeneLFC)
+export(calculateGenePval)
+export(limma)
+export(limmaPermutation)
+export(medianNormalization)
+export(normalMM)
+export(scatterPlot)

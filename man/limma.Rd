@@ -28,4 +28,5 @@ condition <- gl(2,3,labels=c("Treatment","Baseline"))
 design <- model.matrix(~ 0 + condition)
 contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
 limma.fit <- limma(y,design,contrast.matrix)
+
 }

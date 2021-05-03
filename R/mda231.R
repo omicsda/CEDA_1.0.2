@@ -8,4 +8,6 @@
 #'   \item{sgRNA}{Raw Read counts of sgRNAs}
 #'   \item{negene}{A list of non-essential genes}
 #' }
+#'
+#' @export
 "mda231"

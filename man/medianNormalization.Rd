@@ -31,4 +31,5 @@ colnames(count) = paste0("sample", 1:6)
 rownames(count) = paste0("sgRNA", 1:5000)
 control <- count[1:100,]
 normalizedcount <- medianNormalization(count, control)
+
 }

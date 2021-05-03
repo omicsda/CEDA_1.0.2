@@ -20,6 +20,10 @@
 #' rownames(count) = paste0("sgRNA", 1:5000)
 #' control <- count[1:100,]
 #' normalizedcount <- medianNormalization(count, control)
+#'
+#' @importFrom stats median
+#' 
+#' @export
 medianNormalization <- function(data, control) {
   gm <- exp(rowMeans(log(control+1))) 
   f <- apply(control, 2, function(u) median((u/gm)[gm > 0]))
@@ -46,6 +50,11 @@ medianNormalization <- function(data, control) {
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
 #' limma.fit <- limma(y,design,contrast.matrix)
+#'
+#' @importFrom limma limma
+#' @importFrom limma contrasts.fit makeContrasts lmFit eBayes
+#'
+#' @export
 limma <- function(data, design, contrast.matrix) {
   lmfit <- limma::lmFit(data,design)
   lmfit.eBayes <- limma::eBayes(contrasts.fit(lmfit, contrast.matrix))
@@ -77,6 +86,8 @@ limma <- function(data, design, contrast.matrix) {
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
 #' fit <- limmaPermutation(y,design,contrast.matrix,20)
+#'
+#' @export
 limmaPermutation <- function(data, design, contrast.matrix, nperm) {
   n.rna <- dim(data)[1]
   beta.null <- matrix(0,n.rna,nperm)
@@ -109,6 +120,8 @@ limmaPermutation <- function(data, design, contrast.matrix, nperm) {
 #' @param d0 Number of times for fitting mixture model using different 
 #'   starting values
 #' @return Normal mixture model fit and BIC value of the log-likelihood
+#'
+#' @importFrom mixtools normalMixEM
 EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
   for (i in 1:d0)
   {
@@ -145,6 +158,10 @@ EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
 #' \dontrun{
 #' nmm.fit <- normalMM(data,theta0)
 #' }
+#'
+#' @importFrom stats dnorm pnorm
+#'
+#' @export
 normalMM <- function(data,theta0) {
   eta <- 0.5
   d <- 10
@@ -447,6 +464,10 @@ normalMM <- function(data,theta0) {
 #' @param data A numeric matrix from the output of normalMM function
 #' @param fdr A level of false discovery rate
 #' @param ... Other graphical parameters
+#'
+#' @importFrom ggplot2 aes_string aes geom_point geom_vline theme theme_bw element_blank xlab ylab
+#'
+#' @export
 scatterPlot <- function(data, fdr, ...) {
   b <- 6
   xs <- min(data$exp.level.log2)
@@ -533,7 +554,9 @@ makeRhoNull <- function(n, p, nperm) {
 #' 
 #' Imkeller, K., Ambrosi, G., Boutros, M. et al. gscreend: modelling asymmetric 
 #' count ratios in CRISPR screens to decrease experiment size and improve 
-#' phenotype detection. Genome Biol 21, 53 (2020). 
+#' phenotype detection. Genome Biol 21, 53 (2020).
+#'
+#' @export
 calculateGenePval <- function(pvec, genes, alpha) {
   cut.pvec <- pvec <= alpha
   score_vals <- rank(pvec)/length(pvec)
@@ -568,6 +591,8 @@ calculateGenePval <- function(pvec, genes, alpha) {
 #' @param lfcs A numeric vector containing log fold change of sgRNAs.
 #' @param genes A character string containing gene names corresponding to sgRNAs.
 #' @return A numeric vector containing log fold ratio of genes.
+#'
+#' @export
 calculateGeneLFC <- function(lfcs, genes) {
   vapply(split(lfcs, genes), FUN = mean, FUN.VALUE = numeric(1))
 }

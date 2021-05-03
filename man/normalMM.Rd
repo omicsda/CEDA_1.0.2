@@ -25,4 +25,5 @@ and return the posterior log fold ratios.
 \dontrun{
 nmm.fit <- normalMM(data,theta0)
 }
+
 }

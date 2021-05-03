@@ -31,4 +31,5 @@ condition <- gl(2,3,labels=c("Control","Baseline"))
 design <- model.matrix(~ 0 + condition)
 contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
 fit <- limmaPermutation(y,design,contrast.matrix,20)
+
 }
