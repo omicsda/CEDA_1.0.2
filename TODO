@@ -1,12 +1,15 @@
-1. Figure out exactly which functions shoudl be wexported as part of the user interface.
+1. :DONE: Figure out exactly which functions shoudl be exported as part of the user interface.
 
-2. Make sure that the documentation maches rte code, and tells the user what they need to know.
+2. Make sure that the documentation matches the code and tells the user what they need to know.
 
-3. Improve the vignette so that it more clearly illustrates and explains the steps in the analysis to the user.
+3. :MOSTLY DONE: Improve the vignette so that it more clearly illustrates and explains the steps in the analysis to the user.
 
-3. Decide if it makes sense to redefine your own version of limma that overwrites the one ine the base package. Should the function name be changed?
+3. :DONE: Decide if it makes sense to redefine your own version of limma that overwrites the one ine the base package. Should the function name be changed? Changes made:
 
-4. Should S3 or S4 classes be used sio that teh "scatterPlot" fuinction can become a "plot" method?
+  limma => runLmmma
+  limmaPermutation => permuteLimma
+
+4. Should S3 or S4 classes be used so that the "scatterPlot" function can become a "plot" method?
 
 5. Are there other generic functions (summary? image?) that should be defined to display the results?
 

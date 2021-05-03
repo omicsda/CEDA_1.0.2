@@ -49,13 +49,12 @@ medianNormalization <- function(data, control) {
 #' condition <- gl(2,3,labels=c("Treatment","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
-#' limma.fit <- limma(y,design,contrast.matrix)
+#' limma.fit <- runLimma(y,design,contrast.matrix)
 #'
-#' @importFrom limma limma
 #' @importFrom limma contrasts.fit makeContrasts lmFit eBayes
 #'
 #' @export
-limma <- function(data, design, contrast.matrix) {
+runLimma <- function(data, design, contrast.matrix) {
   lmfit <- limma::lmFit(data,design)
   lmfit.eBayes <- limma::eBayes(contrasts.fit(lmfit, contrast.matrix))
   results <- data.frame(lmfit.eBayes$coef,
@@ -85,10 +84,10 @@ limma <- function(data, design, contrast.matrix) {
 #' condition <- gl(2,3,labels=c("Control","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
-#' fit <- limmaPermutation(y,design,contrast.matrix,20)
+#' fit <- permuteLimma(y,design,contrast.matrix,20)
 #'
 #' @export
-limmaPermutation <- function(data, design, contrast.matrix, nperm) {
+permuteLimma <- function(data, design, contrast.matrix, nperm) {
   n.rna <- dim(data)[1]
   beta.null <- matrix(0,n.rna,nperm)
   ns.grp <- dim(design)[1]/2
@@ -99,7 +98,7 @@ limmaPermutation <- function(data, design, contrast.matrix, nperm) {
     col.grp1 <- c(sample(1:ns.grp,n.floor),sample((ns.grp+1):(2*ns.grp),n.ceiling))
     col.grp2 <- setdiff(1:(2*ns.grp),col.grp1)
     col.new <- c(col.grp1,col.grp2)
-    limma.fit.null <- limma(data[,col.new],design,contrast.matrix)
+    limma.fit.null <- runLimma(data[,col.new],design,contrast.matrix)
     beta.null[,j] <- limma.fit.null$lfc
   }
   return(beta.null)
