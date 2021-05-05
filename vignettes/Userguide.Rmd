@@ -26,11 +26,11 @@ knitr::opts_chunk$set(
 
 
 # Introduction
-We developed CEDA is developed to analyze read counts of single guide RNAs (sgRNAs)
-rom CRISPR screening experiments. The sgRNAs are synthetically generated from genes, 
+We developed CEDA to analyze read counts of single guide RNAs (sgRNAs)
+raw CRISPR screening experiments. The sgRNAs are synthetically generated from genes, 
 and each gene can generate multiple sgRNAs. CEDA models the sgRNA counts at 
 different levels of gene expression by multi-component normal mixtures, with the
-model fit by an EM algorithms. Posterior estimates at sgRNA level are then summarized 
+model fit by an EM algorithm. Posterior estimates at sgRNA level are then summarized 
 for each gene.
 
 In this document, we use data from an experiment with the MDA231 cell line to illustrate
@@ -45,12 +45,12 @@ CEDA analysis follows a workflow that is typical for most omics level experiment
 4. Summarize and view the results. 
 
 ## Data Format
-In our exoperiment, three samples of MDA231 cells were untreated at time T=0,
+In our experiment, three samples of MDA231 cells were untreated at time T=0,
 and another three samples of MDA231 cells were treated with DMSO at time T=0.
-We are interested  in detecting sgRNAs that are differentially changed by treatment. 
+We are interested in detecting sgRNAs that are differentially changed by a treatment. 
 
 The sgRNA read counts, along with a list of non-essential genes, are stored 
-in the dataset `mda231` that we have bnicluded in the `CEDA` package. We read that
+in the dataset `mda231` that we have included in the `CEDA` package. We read that
 dataset and explore its structure.
 ```{r data}
 library(CEDA)
@@ -61,7 +61,7 @@ names(mda231)
 ```
 As you can see, this is a list containing two components
 
-1. `sgRNA`, the observed count data, and
+1. `sgRNA`, the observed count data of six samples, and
 2. `neGene`, the set of non-essential genes.
 
 ```{r sgRNA}
@@ -69,15 +69,17 @@ dim(mda231$sgRNA)
 length(mda231$neGene$Gene)
 head(mda231$sgRNA)
 ```
-Notice that this includes an extra column, "`exp.level.log2`", that was computed from
-the raw data.
+Notice that the `sgRNA` component includes an extra column, "`exp.level.log2`", that
+are the expression level (in log2 scale) of genes and was computed from raw gene 
+expression data.
 ```{r echo = FALSE, eval = FALSE}
 UN <- apply((mda231$sgRNA[, 6:8]), 1, mean)
 TR <- apply(log2(mda231$sgRNA[, 3:8]), 1, mean)
 foo <- TR/UN
 ```
 
-The second element of the list is, as expected, just a list of gene names:
+The second element of the list `neGene` is, as expected, just a list of gene names
+that are the non-essential genes:
 ```{r neGene}
 dim(mda231$neGene)
 head(mda231$neGene)
