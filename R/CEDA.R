@@ -45,7 +45,7 @@ medianNormalization <- function(data, control) {
 #' @return A data frame with rows corresponding to sgRNAs and columns
 #'   corresponding to limma results
 #' @examples
-#' y <- matrix(rnorm(1000*6),100,6)
+#' y <- matrix(rnorm(1000*6),1000,6)
 #' condition <- gl(2,3,labels=c("Treatment","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
@@ -80,7 +80,7 @@ runLimma <- function(data, design, contrast.matrix) {
 #' @param nperm Number of permutations
 #' @return A numeric matrix containing log2 fold changes with permutations
 #' @examples
-#' y <- matrix(rnorm(1000*6),100,6)
+#' y <- matrix(rnorm(1000*6),1000,6)
 #' condition <- gl(2,3,labels=c("Control","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
@@ -154,7 +154,7 @@ EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
 #' @return A numeric matrix containing limma results, RNA expression levels,
 #'   posterior log2 fold ratio, log p-values, and estimates of mixture model
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' nmm.fit <- normalMM(data,theta0)
 #' }
 #'
@@ -464,6 +464,7 @@ normalMM <- function(data,theta0) {
 #' @param fdr A level of false discovery rate
 #' @param ... Other graphical parameters
 #'
+#' @return No return value
 #' @importFrom ggplot2 aes_string aes geom_point geom_vline theme theme_bw element_blank xlab ylab
 #'
 #' @export
@@ -533,7 +534,7 @@ makeRhoNull <- function(n, p, nperm) {
 #' (alpha-RRA method) on sgRNAs' p-values
 #'
 #' Code was adapted from R package gscreend. The alpha-RRA method is 
-#' adapted from Li et al. (2014).
+#' adapted from MAGeCK.
 #'
 #' @param pvec A numeric vector containing p-values of sgRNAs.
 #' @param genes A character string containing gene names corresponding 
@@ -543,18 +544,6 @@ makeRhoNull <- function(n, p, nperm) {
 #'   2) a numeric matrix of rho null, each column corresponding to a different 
 #'   number of sgRNAs per gene; 3)a numeric vector of rho; 4) a numeric vector 
 #'   of number of sgRNAs per gene.
-#' @references
-#' Kolde R, Laur S, Adler P, Vilo J: Robust rank aggregation for gene list 
-#' integration and meta-analysis. Bioinformatics 2012, 28:573-580.
-#' 
-#' Li, W., Xu, H., Xiao, T. et al. MAGeCK enables robust identification of 
-#' essential genes from genome-scale CRISPR/Cas9 knockout screens. 
-#' Genome Biol 15, 554 (2014).
-#' 
-#' Imkeller, K., Ambrosi, G., Boutros, M. et al. gscreend: modelling asymmetric 
-#' count ratios in CRISPR screens to decrease experiment size and improve 
-#' phenotype detection. Genome Biol 21, 53 (2020).
-#'
 #' @export
 calculateGenePval <- function(pvec, genes, alpha) {
   cut.pvec <- pvec <= alpha
