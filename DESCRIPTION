@@ -2,8 +2,9 @@ Package: CEDA
 Type: Package
 Title: CRISPR Screen and Gene Expression Differential Analysis
 Version: 1.0.2
-Author: Lianbo Yu, Kevin R. Coombes
-Maintainer: Lianbo Yu <Lianbo.Yu@osumc.edu>
+Authors@R: c(person("Lianbo","Yu",role=c("aut","cre"),
+            email="Lianbo.Yu@osumc.edu"),
+            person(c("Kevin","R."),"Coombes",role="aut"))
 Description: Provides analytical methods for analyzing CRISPR screen data
     at different levels of gene expression. Multi-component normal mixture models
     and EM algorithms are used for modeling.
