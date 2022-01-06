@@ -23,7 +23,7 @@ A data frame with rows corresponding to sgRNAs and columns
 The lmFit function in R package limma is employed for group comparisons.
 }
 \examples{
-y <- matrix(rnorm(1000*6),100,6)
+y <- matrix(rnorm(1000*6),1000,6)
 condition <- gl(2,3,labels=c("Treatment","Baseline"))
 design <- model.matrix(~ 0 + condition)
 contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
