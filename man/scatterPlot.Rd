@@ -13,6 +13,9 @@ scatterPlot(data, fdr, ...)
 
 \item{...}{Other graphical parameters}
 }
+\value{
+No return value
+}
 \description{
 This function generates a scatter plot of log2 fold ratios of sgRNAs
 against the corresponding gene expression levels.

@@ -22,7 +22,8 @@ This function perform an empirical Bayes modeling on log fold ratios
 and return the posterior log fold ratios.
 }
 \examples{
-\dontrun{
+\donttest{
 nmm.fit <- normalMM(data,theta0)
 }
+
 }

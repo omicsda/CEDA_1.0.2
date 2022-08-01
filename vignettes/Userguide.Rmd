@@ -1,6 +1,6 @@
 ---
 title: "CRISPR Screen and Gene Expression Differential Analysis"
-author: "Lianbo Yu, Yue Zhao, and Lang Li"
+author: "Lianbo Yu, Yue Zhao, Kevin R. Coombes, and Lang Li"
 date: "`r Sys.Date()`"
 #output: rmarkdown::html_vignette
 output: 
@@ -25,35 +25,71 @@ knitr::opts_chunk$set(
 ```
 
 
-## Introduction
-CEDA is developed for analyzing read counts of single guide RNAs (sgRNAs)
-by CRISPR screen experiments. sgRNAs are synthetically generated from genes 
-and each gene can generate multiple sgRNAs. CEDA models sgRNA counts at 
-different levels of gene expression by multi-component normal mixtures 
-and EM algorithms. Posterior estimates at sgRNA level are then summarized 
+# Introduction
+We developed CEDA to analyze read counts of single guide RNAs (sgRNAs)
+raw CRISPR screening experiments. The sgRNAs are synthetically generated from genes, 
+and each gene can generate multiple sgRNAs. CEDA models the sgRNA counts at 
+different levels of gene expression by multi-component normal mixtures, with the
+model fit by an EM algorithm. Posterior estimates at sgRNA level are then summarized 
 for each gene.
 
-In this document, we use a MDA231 cell experiment as an example to
-demonstrate how to use CEDA to perform CRISPR screen data analysis.
+In this document, we use data from an experiment with the MDA231 cell line to illustrate
+how to use CEDA to perform CRISPR screen data analysis.
 
-## Data and Normalization
-Three samples of MDA231 cells were untreated at T0, and another three 
-samples of MDA231 cells were treated with DMSO at T0. We are interested 
-in detecting sgRNAs that are differentially changed by treatment. 
+# Overview
+CEDA analysis follows a workflow that is typical for most omics level experiments.
 
-sgRNA read counts along with a list of non-essential genes are stored 
-in the dataset mda231 in CEDA. 
+1. Put the data into an appropriate format for input to CEDA.
+2. Normalize the raw counts.
+3. Fit a linear model to the data.
+4. Summarize and view the results. 
+
+## Data Format
+In our experiment, three samples of MDA231 cells were untreated at time T=0,
+and another three samples of MDA231 cells were treated with DMSO at time T=0.
+We are interested in detecting sgRNAs that are differentially changed by a treatment. 
+
+The sgRNA read counts, along with a list of non-essential genes, are stored 
+in the dataset `mda231` that we have included in the `CEDA` package. We read that
+dataset and explore its structure.
 ```{r data}
 library(CEDA)
 data("mda231")
+class(mda231)
+length(mda231)
+names(mda231)
+```
+As you can see, this is a list containing two components
+
+1. `sgRNA`, the observed count data of six samples, and
+2. `neGene`, the set of non-essential genes.
+
+```{r sgRNA}
 dim(mda231$sgRNA)
 length(mda231$neGene$Gene)
 head(mda231$sgRNA)
 ```
+Notice that the `sgRNA` component includes an extra column, "`exp.level.log2`", that
+are the expression level (in log2 scale) of genes and was computed from raw gene 
+expression data.
+```{r echo = FALSE, eval = FALSE}
+UN <- apply((mda231$sgRNA[, 6:8]), 1, mean)
+TR <- apply(log2(mda231$sgRNA[, 3:8]), 1, mean)
+foo <- TR/UN
+```
 
-sgRNA read counts needs to be normalized across sample replicates before 
-formal analysis. Non-essential genes are assumed to have no change after 
-DMSO treatment. Median normalization factors of the non-essential genes 
+The second element of the list `neGene` is, as expected, just a list of gene names
+that are the non-essential genes:
+```{r neGene}
+dim(mda231$neGene)
+head(mda231$neGene)
+```
+
+## Normalization
+The sgRNA read counts needs to be normalized across sample replicates before 
+formal analysis. The non-essential genes are assumed to have no change after 
+DMSO treatment. So, our recommended procedure is to perform median normalization
+based on the set of non-essential genes.nes 
 were used for normalizing sgRNA counts of all samples.
 ```{r normalization}
 mda231.ne <- mda231$sgRNA[mda231$sgRNA$Gene %in% mda231$neGene$Gene,]
@@ -62,46 +98,54 @@ mda231.norm <- medianNormalization(mda231$sgRNA[,cols], mda231.ne[,cols])[[2]]
 ```
 
 ## Analysis
-Our goal is to detect essential sgRNAs that have different count levels 
-between conditions. R package limma was used to calculate log fold ratios
+Our primary goal is to detect essential sgRNAs that have different count levels 
+between conditions. We rely on the R package `limma` to calculate log fold ratios
 between three untreated and three treated samples. 
 
 ### Calculating fold ratios
-```{r limma}
-library(limma)
-group <- gl(2,3,labels=c("Control","Baseline"))
+First, we have to go through the usual `limma` steps to describe the design of
+the study. There were two groups of replicate samples. We will call these groups
+"Control" and "Baseline" (although "Treated" and Untreated" would work just as well).
+Our main interest is determining the differences between the groups. And we have to
+record this information in a "contrast matrix" so limma knows what we want to compare.
+```{r design}
+group <- gl(2, 3, labels=c("Control","Baseline"))
 design <- model.matrix(~  0 + group)
-colnames(design) <- sapply(colnames(design),function(x) substr(x,6,nchar(x)))
-contrast.matrix <- makeContrasts("Control-Baseline",levels=design)
-limma.fit <- limma(log2(mda231.norm+1),design,contrast.matrix)
+colnames(design) <- sapply(colnames(design), function(x) substr(x, 6, nchar(x)))
+contrast.matrix <- makeContrasts("Control-Baseline", levels=design)
+```
+Finally, we can run the lmima algorithm.
+```{r limfit}
+limma.fit <- runLimma(log2(mda231.norm+1),design,contrast.matrix)
 ```
 
-Then results from limma analysis were merged with sgRNA counts.
+We merge the results from our limma analysis with the original sgRNA count data.
 ```{r merge}
-mda231.limma <- data.frame(mda231$sgRNA,limma.fit)
+mda231.limma <- data.frame(mda231$sgRNA, limma.fit)
 head(mda231.limma)
 ```
 
 ### Fold ratios under the null hypotheses
 Under the null hypothses, all sgRNAs levels are unchanged between the
 two conditions. To obtain fold ratios under the null, samples were 
-permutated between two conditions, log fold ratios were obtained from
+permuted between two conditions, and log fold ratios were obtained from
 limma analysis under each permutation.
 ```{r betanull}
-betanull <- limmaPermutation(log2(mda231.norm+1),design,contrast.matrix,20)
+betanull <- permuteLimma(log2(mda231.norm + 1), design, contrast.matrix, 20)
 theta0 <- sd(betanull)
 theta0
 ```
 
 ### Fitting three-component mixture models
-A three-component mixture model is assumed for log fold ratios at 
+A three-component mixture model (unchanged, overexpresssed, and underexpressed)
+is assumed for log fold ratios at 
 different level of gene expression. Empirical Bayes method was employed 
 to estimate parematers of the mixtures and posterior means were obtained 
 for estimating actual log fold ratios between the two conditions. 
 P-values of sgRNAs were then calculated by permutation method.
 
 ```{r mm, results='hide'}
-nmm.fit <- normalMM(mda231.limma,theta0)
+nmm.fit <- normalMM(mda231.limma, theta0)
 ```
 
 Results from the mixture model were shown in Figure $1$. False 

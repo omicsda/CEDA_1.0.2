@@ -20,6 +20,10 @@
 #' rownames(count) = paste0("sgRNA", 1:5000)
 #' control <- count[1:100,]
 #' normalizedcount <- medianNormalization(count, control)
+#'
+#' @importFrom stats median
+#' 
+#' @export
 medianNormalization <- function(data, control) {
   gm <- exp(rowMeans(log(control+1))) 
   f <- apply(control, 2, function(u) median((u/gm)[gm > 0]))
@@ -41,12 +45,16 @@ medianNormalization <- function(data, control) {
 #' @return A data frame with rows corresponding to sgRNAs and columns
 #'   corresponding to limma results
 #' @examples
-#' y <- matrix(rnorm(1000*6),100,6)
+#' y <- matrix(rnorm(1000*6),1000,6)
 #' condition <- gl(2,3,labels=c("Treatment","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionTreatment-conditionBaseline",levels=design)
-#' limma.fit <- limma(y,design,contrast.matrix)
-limma <- function(data, design, contrast.matrix) {
+#' limma.fit <- runLimma(y,design,contrast.matrix)
+#'
+#' @importFrom limma contrasts.fit makeContrasts lmFit eBayes
+#'
+#' @export
+runLimma <- function(data, design, contrast.matrix) {
   lmfit <- limma::lmFit(data,design)
   lmfit.eBayes <- limma::eBayes(contrasts.fit(lmfit, contrast.matrix))
   results <- data.frame(lmfit.eBayes$coef,
@@ -72,12 +80,14 @@ limma <- function(data, design, contrast.matrix) {
 #' @param nperm Number of permutations
 #' @return A numeric matrix containing log2 fold changes with permutations
 #' @examples
-#' y <- matrix(rnorm(1000*6),100,6)
+#' y <- matrix(rnorm(1000*6),1000,6)
 #' condition <- gl(2,3,labels=c("Control","Baseline"))
 #' design <- model.matrix(~ 0 + condition)
 #' contrast.matrix <- makeContrasts("conditionControl-conditionBaseline",levels=design)
-#' fit <- limmaPermutation(y,design,contrast.matrix,20)
-limmaPermutation <- function(data, design, contrast.matrix, nperm) {
+#' fit <- permuteLimma(y,design,contrast.matrix,20)
+#'
+#' @export
+permuteLimma <- function(data, design, contrast.matrix, nperm) {
   n.rna <- dim(data)[1]
   beta.null <- matrix(0,n.rna,nperm)
   ns.grp <- dim(design)[1]/2
@@ -88,7 +98,7 @@ limmaPermutation <- function(data, design, contrast.matrix, nperm) {
     col.grp1 <- c(sample(1:ns.grp,n.floor),sample((ns.grp+1):(2*ns.grp),n.ceiling))
     col.grp2 <- setdiff(1:(2*ns.grp),col.grp1)
     col.new <- c(col.grp1,col.grp2)
-    limma.fit.null <- limma(data[,col.new],design,contrast.matrix)
+    limma.fit.null <- runLimma(data[,col.new],design,contrast.matrix)
     beta.null[,j] <- limma.fit.null$lfc
   }
   return(beta.null)
@@ -109,6 +119,8 @@ limmaPermutation <- function(data, design, contrast.matrix, nperm) {
 #' @param d0 Number of times for fitting mixture model using different 
 #'   starting values
 #' @return Normal mixture model fit and BIC value of the log-likelihood
+#'
+#' @importFrom mixtools normalMixEM
 EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
   for (i in 1:d0)
   {
@@ -142,9 +154,13 @@ EMFit <- function(x, k0, mean_constr, sd_constr, npara, d0) {
 #' @return A numeric matrix containing limma results, RNA expression levels,
 #'   posterior log2 fold ratio, log p-values, and estimates of mixture model
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' nmm.fit <- normalMM(data,theta0)
 #' }
+#'
+#' @importFrom stats dnorm pnorm
+#'
+#' @export
 normalMM <- function(data,theta0) {
   eta <- 0.5
   d <- 10
@@ -447,6 +463,11 @@ normalMM <- function(data,theta0) {
 #' @param data A numeric matrix from the output of normalMM function
 #' @param fdr A level of false discovery rate
 #' @param ... Other graphical parameters
+#'
+#' @return No return value
+#' @importFrom ggplot2 aes_string aes geom_point geom_vline theme theme_bw element_blank xlab ylab
+#'
+#' @export
 scatterPlot <- function(data, fdr, ...) {
   b <- 6
   xs <- min(data$exp.level.log2)
@@ -513,7 +534,7 @@ makeRhoNull <- function(n, p, nperm) {
 #' (alpha-RRA method) on sgRNAs' p-values
 #'
 #' Code was adapted from R package gscreend. The alpha-RRA method is 
-#' adapted from Li et al. (2014).
+#' adapted from MAGeCK.
 #'
 #' @param pvec A numeric vector containing p-values of sgRNAs.
 #' @param genes A character string containing gene names corresponding 
@@ -523,17 +544,7 @@ makeRhoNull <- function(n, p, nperm) {
 #'   2) a numeric matrix of rho null, each column corresponding to a different 
 #'   number of sgRNAs per gene; 3)a numeric vector of rho; 4) a numeric vector 
 #'   of number of sgRNAs per gene.
-#' @references
-#' Kolde R, Laur S, Adler P, Vilo J: Robust rank aggregation for gene list 
-#' integration and meta-analysis. Bioinformatics 2012, 28:573-580.
-#' 
-#' Li, W., Xu, H., Xiao, T. et al. MAGeCK enables robust identification of 
-#' essential genes from genome-scale CRISPR/Cas9 knockout screens. 
-#' Genome Biol 15, 554 (2014).
-#' 
-#' Imkeller, K., Ambrosi, G., Boutros, M. et al. gscreend: modelling asymmetric 
-#' count ratios in CRISPR screens to decrease experiment size and improve 
-#' phenotype detection. Genome Biol 21, 53 (2020). 
+#' @export
 calculateGenePval <- function(pvec, genes, alpha) {
   cut.pvec <- pvec <= alpha
   score_vals <- rank(pvec)/length(pvec)
@@ -568,6 +579,8 @@ calculateGenePval <- function(pvec, genes, alpha) {
 #' @param lfcs A numeric vector containing log fold change of sgRNAs.
 #' @param genes A character string containing gene names corresponding to sgRNAs.
 #' @return A numeric vector containing log fold ratio of genes.
+#'
+#' @export
 calculateGeneLFC <- function(lfcs, genes) {
   vapply(split(lfcs, genes), FUN = mean, FUN.VALUE = numeric(1))
 }
